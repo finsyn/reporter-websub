@@ -15,7 +15,9 @@ steps:
          '--region',
          '${_FUNCTION_REGION}',
          '--runtime',
-         'nodejs8'
+         'nodejs8',
+          '--set-env-vars',
+         'WEBSUB_SUBSCRIBER_SECRET=${_WEBSUB_SUBSCRIBER_SECRET}'
          ]
 
 substitutions:
