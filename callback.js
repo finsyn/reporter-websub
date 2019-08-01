@@ -1,7 +1,12 @@
 const { updateSubscription, getSubscription } = require('./store')
-const app = require('express')()
-const { tap, pipe, prop, zipObj, props } = require('ramda')
+const express = require('express')
+const { path, tap, pipe, prop, zipObj, props } = require('ramda')
+const crypto = require('crypto')
 
+const app = express()
+app.use(express.json())
+
+// ExpressReq -> Object<hubVerificationParams>
 const getParams = pipe(
   prop('query'),
   tap(console.log),
@@ -9,8 +14,11 @@ const getParams = pipe(
   zipObj(['hubMode', 'hubTopic', 'hubChallenge'])
 )
 
+// ExpressReq -> String<subscriptionId>
+const getId = path(['params', 'id'])
+
 app.get('/s/:id', async (req, res) => {
-  const id = req.params.id
+  const id = getId(req) 
   const entry = await getSubscription(id)
   if (!entry) res.sendStatus(404)
   const { hubMode, hubTopic, hubChallenge } = getParams(req)
@@ -20,19 +28,34 @@ app.get('/s/:id', async (req, res) => {
   res.status(200).send(hubChallenge)
 })
 
-// const validRoute = pipe(
-//   split('/'),
-//   zipWith([
-//     equals('s'),
-//     test(/^\d+$/)
-//   ])
-// )
+// https://www.w3.org/TR/websub/#content-distribution
+app.post('/s/:id', async (req, res) => {
+  const id = getId(req) 
+  const entry = await getSubscription(id)
+  if (!entry) {
+    return res.sendStatus(410)
+  }
+  // acknowledge message as soon as possible
+  res.sendStatus(200)
+  // verify X-Hub-Signature header 
+  const [ algo, hmacHub ] = req.headers['x-hub-signature'].split('=')
+  console.log(algo, hmacHub)
+  const hmac = crypto.createHmac(algo, process.env.WEBSUB_SUBSCRIBER_SECRET)
+  // not sure if smart to use middlware to deserialize, serialize back and forth here
+  // GCF provides an unparsed body as well
+  const rawBody = req.rawBody || JSON.stringify(req.body)
+  console.log(req.body)
+  console.log(rawBody)
+  hmac.update(rawBody, 'utf-8')
 
-// (ExpressReq, [Object<di>]) -> Promise<Object<apiResponse>>
-async function callbackGet(req, { storeGetter = getSubscription }) {
-  const [ route, id ] = req.path.split('/')
-  console.log(id)
-  return { response: entry, status: 200 }
-}
+  // TODO: parse payload and emit Activity PubSub Message if signature is valid
+  if (hmac.digest('hex') === hmacHub) {
+    console.log('valid signature')
+  }
+  else {
+    console.warn('invalid signature')
+  }
+  console.log(req.body)
+})
 
 module.exports = app
