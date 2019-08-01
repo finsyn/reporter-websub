@@ -9,7 +9,7 @@ steps:
          '--memory',
          '${_FUNCTION_MEMORY}',
          '--entry-point',
-         'entry',
+         'onCallBack',
          '--runtime',
          '${_FUNCTION_RUNTIME}',
          '--region',
