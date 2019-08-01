@@ -17,24 +17,30 @@ const getParams = pipe(
 // ExpressReq -> String<subscriptionId>
 const getId = path(['params', 'id'])
 
+// Incoming hub intent verifications
+// ---------------------------------
+// https://www.w3.org/TR/websub/#x5-3-hub-verifies-intent-of-the-subscriber
+//
 app.get('/s/:id', async (req, res) => {
+  console.log('`incoming verification request from hub: ${req.params}`)
   const id = getId(req) 
   const entry = await getSubscription(id)
-  if (!entry) res.sendStatus(404)
+  if (!entry) return res.sendStatus(404)
   const { hubMode, hubTopic, hubChallenge } = getParams(req)
-  if (hubTopic !== entry.topic) res.sendStatus(404)
+  if (hubTopic !== entry.topic) return res.sendStatus(404)
   entry.mode = hubMode
   await updateSubscription(id, entry)
   res.status(200).send(hubChallenge)
 })
 
+// Incoming content from hub  
+// -------------------------
 // https://www.w3.org/TR/websub/#content-distribution
+//
 app.post('/s/:id', async (req, res) => {
   const id = getId(req) 
   const entry = await getSubscription(id)
-  if (!entry) {
-    return res.sendStatus(410)
-  }
+  if (!entry) return res.sendStatus(410)
   // acknowledge message as soon as possible
   res.sendStatus(200)
   // verify X-Hub-Signature header 
@@ -44,8 +50,6 @@ app.post('/s/:id', async (req, res) => {
   // not sure if smart to use middlware to deserialize, serialize back and forth here
   // GCF provides an unparsed body as well
   const rawBody = req.rawBody || JSON.stringify(req.body)
-  console.log(req.body)
-  console.log(rawBody)
   hmac.update(rawBody, 'utf-8')
 
   // TODO: parse payload and emit Activity PubSub Message if signature is valid

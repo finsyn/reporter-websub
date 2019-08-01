@@ -1,19 +1,35 @@
 const { insertSubscription } = require('./store')
+const querystring = require('querystring')
+const axios = require('axios')
+const { subscribeRequestParams } = require('./websub')
+const { pipe, then } = require('ramda')
 
-async function createSubscription({ topic, hub }) {
+async function createSubscriptionEntry({ topic, hub }) {
   const id = await insertSubscription({
     topic,
     hub,
     createdAt: new Date(),
     mode: 'pending-subscribe'
   })
-  return id 
+  return { topic, hub, id }
 }
 
-async function subscribe({ topic, hub, id }) {
-  return 'OK'
+// https://www.w3.org/TR/websub/#subscriber-sends-subscription-request
+async function sendSubscribeRequest({ topic, hub, id }) {
+  const params = subscribeRequestParams({
+    topic,
+    id,
+    origin: process.env.WEBSUB_CALLBACK_ORIGIN,
+    secret: process.env.WEBSUB_SUBSCRIBER_SECRET
+  })
+  return axios.post(hub, querystring.stringify(params))
 }
+
+const createSubscription = pipe(
+  createSubscriptionEntry,
+  then(sendSubscribeRequest)
+)
 
 module.exports = {
-  createSubscription
+  createSubscription,
 }
