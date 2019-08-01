@@ -5,7 +5,7 @@ async function createSubscription({ topic, hub }) {
     topic,
     hub,
     createdAt: new Date(),
-    status: 'PENDING'
+    status: 'pending-subscribe'
   })
   return id 
 }

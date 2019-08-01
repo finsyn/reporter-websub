@@ -14,7 +14,7 @@ const datastore = constructN(0, Datastore)
 const kind = always('WebSubSubscription')
 
 // Object<subscription> -> Promise<Integer<dbId>>
-async function insertSubscription({ topic, hub, status, createdAt }) {
+async function insertSubscription({ topic, hub, mode, createdAt }) {
   const ds = datastore()
   const key = ds.key(kind())
   const [result] = await ds.insert({
@@ -23,7 +23,7 @@ async function insertSubscription({ topic, hub, status, createdAt }) {
       createdAt,
       topic,
       hub,
-      status
+      mode
     }
   })
   return getKeyId(result) 
@@ -36,7 +36,18 @@ async function getSubscription(id) {
   return result 
 }
 
+async function updateSubscription(id, data) {
+  const ds = datastore()
+  const key = ds.key([kind(), parseInt(id)])
+  const [result] = await ds.update({
+    key,
+    data
+  })
+  return result 
+}
+
 module.exports = {
   insertSubscription,
-  getSubscription
+  getSubscription,
+  updateSubscription
 }
