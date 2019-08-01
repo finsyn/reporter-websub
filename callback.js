@@ -17,7 +17,7 @@ const getParams = pipe(
 // ExpressReq -> String<subscriptionId>
 const getId = path(['params', 'id'])
 
-// Incoming hub intent verifications
+// Incoming hub intent verification
 // ---------------------------------
 // https://www.w3.org/TR/websub/#x5-3-hub-verifies-intent-of-the-subscriber
 //
