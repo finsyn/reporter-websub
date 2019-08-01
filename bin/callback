@@ -1,0 +1,14 @@
+#!/bin/node
+
+const callbackApp = require('../callback') 
+
+require('yargs')
+  .command('serve', 'start callback server', yargs => {
+  }, ({ port = 1337 }) => {
+    callbackApp.listen(
+        port,
+        () => console.log(`WebSub callback listening on ${port}`)
+      )
+  })
+  .argv
+

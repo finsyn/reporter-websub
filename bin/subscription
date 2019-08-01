@@ -1,0 +1,19 @@
+#!/bin/node
+
+const { createSubscription } = require('../subscription')
+
+require('yargs')
+  .command('create <hub> <topic>', 'create new subscription', yargs => {
+    yargs
+      .positional('hub', {
+        describe: 'WebSub hub to connect with'
+      })
+      .positional('topic', {
+        describe: 'topic to receive updates on'
+      })
+  }, ({ topic, hub }) => {
+    createSubscription({ hub, topic })
+      .then(console.log)
+  })
+  .argv
+  // .usage('Usage: $0 <command> [--topic] [--hub]' 
