@@ -22,7 +22,7 @@ const getId = path(['params', 'id'])
 // https://www.w3.org/TR/websub/#x5-3-hub-verifies-intent-of-the-subscriber
 //
 app.get('/s/:id', async (req, res) => {
-  console.log(`incoming verification request from hub: ${req.params}`)
+  console.log(`incoming verification request from hub: ${JSON.stringify(req.params)}`)
   const id = getId(req) 
   const entry = await getSubscription(id)
   if (!entry) return res.sendStatus(404)
