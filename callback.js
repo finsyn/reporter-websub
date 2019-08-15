@@ -2,6 +2,7 @@ const { updateSubscription, getSubscription } = require('./store')
 const express = require('express')
 const { path, tap, pipe, prop, zipObj, props } = require('ramda')
 const crypto = require('crypto')
+const { publishActivity } = require('./activity')
 
 const app = express()
 app.use(express.json())
@@ -41,8 +42,6 @@ app.post('/s/:id', async (req, res) => {
   const id = getId(req) 
   const entry = await getSubscription(id)
   if (!entry) return res.sendStatus(410)
-  // acknowledge message as soon as possible
-  res.sendStatus(200)
   // verify X-Hub-Signature header 
   const [ algo, hmacHub ] = req.headers['x-hub-signature'].split('=')
   console.log(algo, hmacHub)
@@ -55,11 +54,17 @@ app.post('/s/:id', async (req, res) => {
   // TODO: parse payload and emit Activity PubSub Message if signature is valid
   if (hmac.digest('hex') === hmacHub) {
     console.log('valid signature')
+    console.log(req.body)
+    await publishActivity(req.body)
   }
   else {
     console.warn('invalid signature')
   }
-  console.log(req.body)
+  // we should acknowledge message as soon as possible but need to do
+  // processing first because GCF shuts down after response has been sent
+  // TODO: figure out way to send response preemptively
+  res.sendStatus(200)
+  return Promise.resolve()
 })
 
 module.exports = app
