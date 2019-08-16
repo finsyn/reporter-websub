@@ -3,6 +3,7 @@ const express = require('express')
 const { path, tap, pipe, prop, zipObj, props } = require('ramda')
 const crypto = require('crypto')
 const { publishActivity } = require('./activity')
+const to = require('./to')
 
 const app = express()
 app.use(express.json())
@@ -42,6 +43,7 @@ app.post('/s/:id', async (req, res) => {
   const id = getId(req) 
   const entry = await getSubscription(id)
   if (!entry) return res.sendStatus(410)
+  console.log(req.headers['content-type'])
   // verify X-Hub-Signature header 
   const [ algo, hmacHub ] = req.headers['x-hub-signature'].split('=')
   console.log(algo, hmacHub)
@@ -55,7 +57,9 @@ app.post('/s/:id', async (req, res) => {
   if (hmac.digest('hex') === hmacHub) {
     console.log('valid signature')
     console.log(req.body)
-    await publishActivity(req.body)
+    const [err, messageId] = await to(publishActivity(req.body))
+    if(err) console.error(err) 
+    else console.log(`published activity message: ${messageId}`)
   }
   else {
     console.warn('invalid signature')

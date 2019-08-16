@@ -7,7 +7,7 @@ const { pipe, then } = require('ramda')
 async function createSubscriptionEntry({ topic, hub }) {
   const id = await insertSubscription({
     topic,
-    hub,
+    hub: hub,
     createdAt: new Date(),
     mode: 'pending-subscribe'
   })
@@ -17,7 +17,7 @@ async function createSubscriptionEntry({ topic, hub }) {
 // https://www.w3.org/TR/websub/#subscriber-sends-subscription-request
 async function sendSubscribeRequest({ topic, hub, id }) {
   const params = subscribeRequestParams({
-    topic,
+    topic: `${topic}.json`,
     id,
     origin: process.env.WEBSUB_CALLBACK_ORIGIN,
     secret: process.env.WEBSUB_SUBSCRIBER_SECRET
