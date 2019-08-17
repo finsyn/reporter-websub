@@ -1,5 +1,5 @@
 const { applySpec, path, ifElse, pathSatisfies, always, head, pipe,
-  map, prop, includes, identity, converge, then } = require('ramda')
+  map, prop, includes, identity, converge } = require('ramda')
 const { publish } = require('finsyn-pubsub')
 
 // Object<mfnNewsItem> -> Object<ActivityData>
@@ -35,14 +35,12 @@ const toActivity = applySpec({
 
 const publishActivity = pipe(
   toActivity,
-  then(
-    converge(
-      publish, [
-        always('activity.security.v2'),
-        identity,
-        always({})
-      ]
-    )
+  converge(
+    publish, [
+      always('activity.security.v2'),
+      identity,
+      always({})
+    ]
   )
 )
 
