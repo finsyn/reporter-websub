@@ -8,6 +8,7 @@ t.test(t => {
     data,
     {
       type: 'Report',
+      category: 'SemiAnnual',
       publisherLei: '54930047Z8TEBJTKYX74',
       title: 'New strategic partnerships within Digital Identity and Mobile Devices',
       language: 'en',

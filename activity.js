@@ -1,6 +1,53 @@
 const { applySpec, path, ifElse, pathSatisfies, always, head, pipe,
-  map, prop, includes, identity, converge } = require('ramda')
+  sortBy, split, length, map, prop, includes, identity, converge, __,
+  is, filter, find, test, last, reduce, propOr } = require('ramda')
 const { publish } = require('finsyn-pubsub')
+
+const tagTree = {
+  sub: {
+    ci: {
+      other: 'Other',
+      staff: 'StaffChange',
+      gm: 'GeneralMeeting',
+      calendar: 'Calendar',
+      nomination: 'Nomination',
+      sales: 'Sale',
+      sales: {
+        order: 'SaleOrder',
+      }
+    },
+    ca: {
+      shares: 'Shares',
+      ma: 'MergerAcquisition',
+      ipo: 'Ipo',
+      prospectus: 'Prospectus',
+    },
+    report: {
+      annual: 'Yearly',
+      interim: {
+        default: 'Quarterly',
+        q1: 'Quarterly',
+        q2: 'SemiAnnual',
+        q3: 'Quarterly',
+        q4: 'EndReport'
+      }
+    }
+  }
+}
+
+const tagsToCategory = pipe(
+  path(['properties', 'tags']),
+  filter(test(/^sub:/)),
+  sortBy(pipe(split(':'), length)),
+  last,
+  split(':'),
+  reduce((dict, node) => dict[node], tagTree),
+  ifElse(
+    is(Object),
+    propOr('Unknown', 'default'),
+    identity
+  )
+)
 
 // Object<mfnNewsItem> -> Object<ActivityData>
 const toActivity = applySpec({
@@ -14,6 +61,7 @@ const toActivity = applySpec({
       always('Report'),
       always('Filing')
     ),
+    category: tagsToCategory,
     publisherLei: pipe(
       path(['author', 'leis']),
       head
