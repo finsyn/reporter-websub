@@ -1,6 +1,6 @@
 const { applySpec, path, ifElse, pathSatisfies, always, head, pipe,
   sortBy, split, length, map, prop, includes, identity, converge, __,
-  is, filter, find, test, last, reduce, propOr } = require('ramda')
+  is, filter, find, test, last, reduce, propOr, defaultTo } = require('ramda')
 const { publish } = require('finsyn-pubsub')
 
 const tagTree = {
@@ -37,6 +37,8 @@ const tagTree = {
 
 const tagsToCategory = pipe(
   path(['properties', 'tags']),
+  // some payloads doesn't contain tags
+  defaultTo(['sub:ci:other']),
   filter(test(/^sub:/)),
   sortBy(pipe(split(':'), length)),
   last,
@@ -49,6 +51,11 @@ const tagsToCategory = pipe(
   )
 )
 
+const isReport = pipe(
+  defaultTo([]),
+  includes('sub:report')
+)
+
 // Object<mfnNewsItem> -> Object<ActivityData>
 const toActivity = applySpec({
   data: applySpec({
@@ -57,7 +64,7 @@ const toActivity = applySpec({
     text: path(['content', 'text']),
     language: path(['properties', 'lang']),
     type: ifElse(
-      pathSatisfies(includes('sub:report'), ['properties', 'tags']),
+      pathSatisfies(isReport, ['properties', 'tags']),
       always('Report'),
       always('Filing')
     ),
