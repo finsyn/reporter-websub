@@ -47,6 +47,7 @@ app.post('/s/:id', async (req, res) => {
   if (contentType != 'application/json') {
     console.log(`cant handle this content type: ${contentType}`)
     res.sendStatus(200)
+    return Promise.resolve() 
   }
   // verify X-Hub-Signature header 
   const [ algo, hmacHub ] = req.headers['x-hub-signature'].split('=')
